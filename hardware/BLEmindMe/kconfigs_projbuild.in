@@ -1,0 +1,6 @@
+source "C:/Users/josip/esp/v5.4.1/esp-idf/components/bootloader/Kconfig.projbuild"
+source "C:/Users/josip/esp/v5.4.1/esp-idf/components/esp_app_format/Kconfig.projbuild"
+source "C:/Users/josip/esp/v5.4.1/esp-idf/components/esp_rom/Kconfig.projbuild"
+source "C:/Users/josip/esp/v5.4.1/esp-idf/components/esptool_py/Kconfig.projbuild"
+source "C:/Users/josip/esp/v5.4.1/esp-idf/components/partition_table/Kconfig.projbuild"
+source "Z:/Josip/+FER/8. semestar/IoT/Projekt/BLEmindMe/main/Kconfig.projbuild"
