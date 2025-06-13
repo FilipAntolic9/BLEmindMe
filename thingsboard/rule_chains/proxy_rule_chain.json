@@ -1,0 +1,389 @@
+{
+  "ruleChain": {
+    "name": "Proxy Rule Chain",
+    "type": "CORE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null,
+    "additionalInfo": {
+      "description": ""
+    }
+  },
+  "metadata": {
+    "version": 50,
+    "firstNodeIndex": 2,
+    "nodes": [
+      {
+        "type": "org.thingsboard.rule.engine.debug.TbMsgGeneratorNode",
+        "name": "Generator",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "msgCount": 1,
+          "periodInSeconds": 1,
+          "scriptLang": "JS",
+          "jsScript": "var metadata = {};\nvar msgType;\n\nvar msg = {\n    username: \"iva.ivic@gmail.com\",\n    password: \"ivaivic\",\n    customerId: \"ce4757a0-414b-11f0-a544-db21b46190ed\",\n    espId: \"0c75afe0-43e0-11f0-a544-db21b46190ed\"\n};\n\nreturn { msg: msg, metadata: metadata, msgType: msgType };",
+          "tbelScript": "var msg = { username: \"iva.ivic@gmail.com\", password: \"ivaivic\" };\nvar metadata = {};\nvar msgType = \"POST_TELEMETRY_REQUEST\";\n\nreturn { msg: msg, metadata: metadata, msgType: msgType };",
+          "originatorId": "e73ece40-364d-11f0-a544-db21b46190ed",
+          "originatorType": "USER"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 44,
+          "layoutY": 0
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "Login",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "restEndpointUrlPattern": "http://localhost:8080/api/auth/login",
+          "requestMethod": "POST",
+          "useSimpleClientHttpFactory": false,
+          "parseToPlainText": false,
+          "ignoreRequestBody": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyScheme": null,
+          "proxyHost": null,
+          "proxyPort": 0,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "readTimeoutMs": 0,
+          "maxParallelRequestsCount": 0,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "credentials": {
+            "type": "anonymous"
+          },
+          "maxInMemoryBufferSizeInKb": 256
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 289,
+          "layoutY": 702
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Login params",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var username = msg.username;\nvar password = msg.password;\nvar customerId = msg.customerId;\nvar espId = msg.espId;\n\nvar metadata = {\n    customerId: customerId,\n    espId: espId\n}\n\nvar msg = {\n    username: username,\n    password: password\n};\n\nreturn {msg: msg, metadata: metadata, msgType: msgType};",
+          "tbelScript": "var msg = { username: \"iva.ivic@gmail.com\", password: \"ivaivic\" };\nreturn {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 294,
+          "layoutY": 570
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Token inside metadata",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var metadata1 = {\r\n    espId: metadata.espId,\r\n    customerId : metadata.customerId,\r\n    token : msg.token\r\n};\r\n\r\nvar msg1 = {\r\n    token : msg.token,\r\n}\r\n\r\nreturn { msg: msg1, metadata: metadata1 };",
+          "tbelScript": "// Pretpostavimo da msg.token postoji\r\nvar metadata = msg.metadata || {};  // Ako ne postoji, napravi prazan objekt\r\nmetadata.token = msg.token;\r\n\r\n// Očisti msg sadržaj, ali zadrži metadata i ostale stvari\r\nmsg = {};\r\n\r\n// Vrati objekt prema ThingsBoard specifikaciji\r\nreturn { msg: msg, metadata: metadata };"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 512,
+          "layoutY": 571
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "Get fromId relations",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "restEndpointUrlPattern": "http://161.53.133.253:8080/api/relations?fromId=${espId}&fromType=DEVICE&relationTypeGroup=DEVICE",
+          "requestMethod": "GET",
+          "useSimpleClientHttpFactory": false,
+          "parseToPlainText": false,
+          "ignoreRequestBody": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyScheme": null,
+          "proxyHost": null,
+          "proxyPort": 0,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "readTimeoutMs": 0,
+          "maxParallelRequestsCount": 0,
+          "headers": {
+            "Authorization": "Bearer $[token]",
+            "Content-Type": "application/json"
+          },
+          "credentials": {
+            "type": "anonymous"
+          },
+          "maxInMemoryBufferSizeInKb": 256
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 509,
+          "layoutY": 700
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Get device ids",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var msg1 = {};\r\n\r\nvar toIds = [];\r\nfor (var i = 0; i < msg.length; i++) {\r\n    toIds.push(msg[i].to.id);\r\n}\r\n\r\nvar metadata1 = {\r\n    espId: metadata.espId,\r\n    token: metadata.token,\r\n    customerId: metadata.customerId,\r\n    toIds : JSON.stringify(toIds)\r\n};\r\n\r\nreturn { msg: msg1, metadata: metadata1 };",
+          "tbelScript": "// Pretpostavimo da msg.token postoji\r\nvar metadata = msg.metadata || {};  // Ako ne postoji, napravi prazan objekt\r\nmetadata.token = msg.token;\r\n\r\n// Očisti msg sadržaj, ali zadrži metadata i ostale stvari\r\nmsg = {};\r\n\r\n// Vrati objekt prema ThingsBoard specifikaciji\r\nreturn { msg: msg, metadata: metadata };"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 734,
+          "layoutY": 572
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "Get all devices",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "restEndpointUrlPattern": "http://161.53.133.253:8080/api/customer/${customerId}/devices?pageSize=100&page=0",
+          "requestMethod": "GET",
+          "useSimpleClientHttpFactory": false,
+          "parseToPlainText": false,
+          "ignoreRequestBody": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyScheme": null,
+          "proxyHost": null,
+          "proxyPort": 0,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "readTimeoutMs": 0,
+          "maxParallelRequestsCount": 0,
+          "headers": {
+            "Authorization": "Bearer ${token}",
+            "Content-Type": "application/json"
+          },
+          "credentials": {
+            "type": "anonymous"
+          },
+          "maxInMemoryBufferSizeInKb": 256
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 747,
+          "layoutY": 701
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Get valid devices",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var toIds = JSON.parse(metadata.toIds);\r\nvar wantedIds = [metadata.espId].concat(toIds);\r\n\r\nvar result = [];\r\nfor (var i = 0; i < msg.data.length; i++) {\r\n    var device = msg.data[i];\r\n    if (wantedIds.indexOf(device.id.id) !== -1) {\r\n        result.push({\r\n            name: device.name,\r\n            id: device.id.id,\r\n            label: device.label || \"\"\r\n        });\r\n    }\r\n}\r\n\r\nvar metadata1 = {};\r\nmetadata1.token = metadata.token;\r\nmetadata1.espId = metadata.espId;\r\n\r\nif (result.length === 0) {\r\n    metadata1.result = \"No devices found for \" + metadata.espId;\r\n    return {msg: {}, metadata: metadata1};\r\n} else {\r\n    metadata1.devices = JSON.stringify(result);\r\n    metadata1.result = \"ok\";\r\n    return {msg: {}, metadata: metadata1};\r\n}",
+          "tbelScript": "// Pretpostavimo da msg.token postoji\r\nvar metadata = msg.metadata || {};  // Ako ne postoji, napravi prazan objekt\r\nmetadata.token = msg.token;\r\n\r\n// Očisti msg sadržaj, ali zadrži metadata i ostale stvari\r\nmsg = {};\r\n\r\n// Vrati objekt prema ThingsBoard specifikaciji\r\nreturn { msg: msg, metadata: metadata };"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 971,
+          "layoutY": 570
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "Get credentials",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "restEndpointUrlPattern": "http://161.53.133.253:8080/api/device/${espId}/credentials",
+          "requestMethod": "GET",
+          "useSimpleClientHttpFactory": false,
+          "parseToPlainText": false,
+          "ignoreRequestBody": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyScheme": null,
+          "proxyHost": null,
+          "proxyPort": 0,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "readTimeoutMs": 0,
+          "maxParallelRequestsCount": 0,
+          "headers": {
+            "Authorization": "Bearer ${token}",
+            "Content-Type": "application/json"
+          },
+          "credentials": {
+            "type": "anonymous"
+          },
+          "maxInMemoryBufferSizeInKb": 256
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 975,
+          "layoutY": 701
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Final",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var metadata1 = {};\r\nvar msg1 = {\r\n    credentials: JSON.parse(msg.credentialsValue),\r\n    devices: JSON.parse(metadata.devices),\r\n    result: metadata.result\r\n    \r\n};\r\n\r\nreturn {msg: msg1, metadata: metadata1, msgType: \"POST_ATTRIBUTES_REQUEST\"};\r\n",
+          "tbelScript": "// Pretpostavimo da msg.token postoji\r\nvar metadata = msg.metadata || {};  // Ako ne postoji, napravi prazan objekt\r\nmetadata.token = msg.token;\r\n\r\n// Očisti msg sadržaj, ali zadrži metadata i ostale stvari\r\nmsg = {};\r\n\r\n// Vrati objekt prema ThingsBoard specifikaciji\r\nreturn { msg: msg, metadata: metadata };"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1204,
+          "layoutY": 571
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "save",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "scope": "SHARED_SCOPE",
+          "notifyDevice": true,
+          "sendAttributesUpdatedNotification": true,
+          "updateAttributesOnlyOnValueChange": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1299,
+          "layoutY": 688
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 1,
+        "toIndex": 3,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 1,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 4,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 5,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 6,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 7,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 8,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 9,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 10,
+        "type": "Success"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}

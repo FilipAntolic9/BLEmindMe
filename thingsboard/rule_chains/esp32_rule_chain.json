@@ -1,0 +1,602 @@
+{
+  "ruleChain": {
+    "name": "ESP32 Rule Chain",
+    "type": "CORE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": true,
+    "configuration": null,
+    "additionalInfo": {
+      "description": ""
+    }
+  },
+  "metadata": {
+    "version": 129,
+    "firstNodeIndex": 17,
+    "nodes": [
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
+        "name": "Switch topics",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749812098761
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "if (!metadata || !metadata.mqttTopic) {\r\n    return ['Other'];\r\n}\r\n\r\nvar topic = metadata.mqttTopic;\r\n\r\nvar matchState = topic.match(/^v1\\/devices\\/esp\\/([^\\/]+)\\/stateUpdate$/);\r\nvar matchLeft = topic.match(/^v1\\/devices\\/esp\\/([^\\/]+)\\/userLeft$/);\r\nvar matchLight = topic.match(/^v1\\/devices\\/esp\\/([^\\/]+)\\/lightState$/);\r\n\r\nif (matchState) {\r\n    return ['State update'];\r\n}\r\nelse if (matchLeft && msg.hasLeft === true) {\r\n    return ['User left'];\r\n}\r\nelse if (matchLeft && msg.hasLeft === false) {\r\n    return ['User entered'];\r\n}\r\nelse if (matchLight) {\r\n    return ['lightState update'];\r\n}\r\n\r\nreturn ['Other'];\r\n",
+          "tbelScript": "function nextRelation(metadata, msg) {\n    return ['one','nine'];\n}\nif(msgType == 'POST_TELEMETRY_REQUEST') {\n    return ['two'];\n}\nreturn nextRelation(metadata, msg);"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 542,
+          "layoutY": 152
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbSplitArrayMsgNode",
+        "name": "Split device states",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749654427750
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "version": 0
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1109,
+          "layoutY": 116
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Get array",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749767314568
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var devicesArray = msg.devices;\nreturn {msg: devicesArray, metadata: metadata, msgType: msgType};",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1103,
+          "layoutY": 28
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.flow.TbRuleChainInputNode",
+        "name": "Go to Tags Rule Chain",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "forwardMsgToDefaultRuleChain": false,
+          "ruleChainId": "16d10650-414d-11f0-a544-db21b46190ed"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1557,
+          "layoutY": 30
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Format telemetry",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749654999757
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "delete msg.deviceId;\r\ndelete msg.deviceName;\r\n\r\nreturn { msg: msg, metadata: metadata, msgType: msgType };\r\n",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1339,
+          "layoutY": 115
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbChangeOriginatorNode",
+        "name": "Change originator",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749655690882
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "originatorSource": "ENTITY",
+          "entityType": "DEVICE",
+          "entityNamePattern": "$[deviceName]",
+          "relationsQuery": {
+            "direction": "FROM",
+            "maxLevel": 1,
+            "filters": [
+              {
+                "relationType": "Contains",
+                "entityTypes": [],
+                "negate": false
+              }
+            ],
+            "fetchLastLevelOnly": false
+          }
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1331,
+          "layoutY": 29
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.delay.TbMsgDelayNode",
+        "name": "Delay on userLeft for X seconds",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749659657442
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "useMetadataPeriodInSecondsPatterns": false,
+          "periodInSeconds": 10,
+          "periodInSecondsPattern": null,
+          "maxPendingMsgs": 1
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 124,
+          "layoutY": 338
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "hasLeft flag TRUE",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749659612018
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "scope": "SERVER_SCOPE",
+          "notifyDevice": false,
+          "sendAttributesUpdatedNotification": false,
+          "updateAttributesOnlyOnValueChange": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 624,
+          "layoutY": 411
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Get the userLeft flag",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749660524648
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "tellFailureIfAbsent": false,
+          "fetchTo": "METADATA",
+          "clientAttributeNames": [],
+          "latestTsKeyNames": [],
+          "serverAttributeNames": [
+            "hasLeft_${username}"
+          ],
+          "sharedAttributeNames": [],
+          "getLatestValueWithTs": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 547,
+          "layoutY": 26
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
+        "name": "Switch based on hasLeft flag",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749767329289
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var key = \"ss_hasLeft_\" + metadata.username;\r\n\r\nif (metadata[key] === \"true\") {\r\n    return ['hasLeft true'];\r\n}\r\nelse {\r\n    return ['hasLeft false'];\r\n}\r\n",
+          "tbelScript": "function nextRelation(metadata, msg) {\n    return ['one','nine'];\n}\nif(msgType == 'POST_TELEMETRY_REQUEST') {\n    return ['two'];\n}\nreturn nextRelation(metadata, msg);"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 793,
+          "layoutY": 29
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Switch msg type",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749721113918
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var key = \"hasLeft_\" + metadata.username;\nvar msg1 = {};\nmsg1[key] = true;\n    \nreturn {msg: msg1, metadata: metadata, msgType: \"POST_ATTRIBUTES_REQUEST\"};",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 387,
+          "layoutY": 337
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Check array",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749767314568
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var allFalse = true;\r\nvar trueDevices = [];\r\n\r\nfor (var i = 0; i < msg.devices.length; i++) {\r\n    var device = msg.devices[i];\r\n    if (device.present === true) {\r\n        allFalse = false;\r\n        trueDevices.push(device.deviceName);\r\n    }\r\n}\r\n\r\nvar msg1 = {\r\n    allFalse: allFalse,\r\n    trueDevices: trueDevices\r\n};\r\n\r\nreturn { msg: msg1, metadata: metadata, msgType: msgType };\r\n",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1108,
+          "layoutY": 237
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
+        "name": "Switch if some devices were left in the room",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749661318543
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "if (msg.allFalse === true) {\r\n    return ['allFalse true'];\r\n}\r\nelse {\r\n    return ['allFalse false'];\r\n}\r\n",
+          "tbelScript": "function nextRelation(metadata, msg) {\n    return ['one','nine'];\n}\nif(msgType == 'POST_TELEMETRY_REQUEST') {\n    return ['two'];\n}\nreturn nextRelation(metadata, msg);"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1109,
+          "layoutY": 322
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Reset hasLeft flag",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var key = \"hasLeft_\" + metadata.username;\nvar msg1 = {};\nmsg1[key] = false;\n\nvar key2 = \"lightState\"\nvar state2 = msg.lightState;\nmsg1[key2] = JSON.parse(state2);\n\nreturn {msg: msg1, metadata: metadata, msgType: \"POST_ATTRIBUTES_REQUEST\"};",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1358,
+          "layoutY": 234
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "userLeft flag FALSE",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749722180801
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "scope": "SERVER_SCOPE",
+          "notifyDevice": false,
+          "sendAttributesUpdatedNotification": false,
+          "updateAttributesOnlyOnValueChange": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1601,
+          "layoutY": 237
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "lightState TRUE attribute",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749722375945
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var key = \"lightState_\" + metadata.username;\nvar msg1 = {};\nmsg1[key] = true;\n\nreturn {msg: msg1, metadata: metadata, msgType: \"POST_ATTRIBUTES_REQUEST\"};",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1544,
+          "layoutY": 474
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "lightState update",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749812206282
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "scope": "SHARED_SCOPE",
+          "notifyDevice": true,
+          "sendAttributesUpdatedNotification": true,
+          "updateAttributesOnlyOnValueChange": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1621,
+          "layoutY": 664
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Get username from topic",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749720919483
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "if (!metadata || !metadata.mqttTopic) {\n    return msg;\n}\n\nvar topic = metadata.mqttTopic;\nvar match = topic.match(/^v1\\/devices\\/esp\\/([^\\/]+)\\//);\n\nif (match) {\n    metadata.username = match[1];\n}\nelse {\n    metadata.mqttTopic = \"\";\n}\n\nreturn {msg: msg, metadata: metadata, msgType: \"POST_ATTRIBUTES_REQUEST\"};",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 266,
+          "layoutY": 151
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Change lightState",
+        "debugSettings": {
+          "failuresEnabled": true,
+          "allEnabled": false,
+          "allEnabledUntil": 1749765425851
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var key = \"lightState\"\nvar state = msg.lightState;\nvar msg1 = {};\nmsg1[key] = JSON.parse(state);\n\n\nreturn {msg: msg1, metadata: metadata, msgType: \"POST_ATTRIBUTES_REQUEST\"};",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1191,
+          "layoutY": 662
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Build missingItems attribute",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "return {msg: msg, metadata: metadata, msgType: msgType};",
+          "tbelScript": "msg.missingItems = msg.trueDevices;\r\nmsg.alertTitle   = \"Zaboravljeni uređaji!\";\r\nmsg.alertBody    = \"Uređaji koji nedostaju: \" + msg.trueDevices.join(\", \");\r\nreturn { msg: msg, metadata: metadata };\r\n"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1255,
+          "layoutY": 474
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save missingItems attr",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "scope": "CLIENT_SCOPE",
+          "notifyDevice": false,
+          "sendAttributesUpdatedNotification": false,
+          "updateAttributesOnlyOnValueChange": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1406,
+          "layoutY": 373
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 6,
+        "type": "User left"
+      },
+      {
+        "fromIndex": 0,
+        "toIndex": 8,
+        "type": "State update"
+      },
+      {
+        "fromIndex": 0,
+        "toIndex": 13,
+        "type": "User entered"
+      },
+      {
+        "fromIndex": 0,
+        "toIndex": 18,
+        "type": "lightState update"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 5,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 1,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 3,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 4,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 10,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 9,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 2,
+        "type": "hasLeft false"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 11,
+        "type": "hasLeft true"
+      },
+      {
+        "fromIndex": 10,
+        "toIndex": 7,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 11,
+        "toIndex": 12,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 12,
+        "toIndex": 13,
+        "type": "allFalse true"
+      },
+      {
+        "fromIndex": 12,
+        "toIndex": 19,
+        "type": "allFalse false"
+      },
+      {
+        "fromIndex": 13,
+        "toIndex": 14,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 15,
+        "toIndex": 16,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 17,
+        "toIndex": 0,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 18,
+        "toIndex": 16,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 19,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 20,
+        "toIndex": 15,
+        "type": "Success"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}
